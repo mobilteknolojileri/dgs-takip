@@ -1,0 +1,90 @@
+---
+interface Props {
+  title: string;
+  activeNav?: string;
+}
+
+const { title, activeNav = '' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="DGS Deneme Takip - Sınav performansını analiz et" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | DGS Takip</title>
+  </head>
+  <body class="min-h-screen font-sans text-slate-100 antialiased">
+    <div class="relative z-10 mx-auto max-w-6xl px-5">
+      <!-- Navbar -->
+      <nav
+        class="sticky top-0 z-50 -mx-5 mb-8 flex items-center justify-between border-b border-white/[0.06] bg-[#0a0a1a]/85 px-5 py-4 backdrop-blur-xl"
+      >
+        <a href="/" class="no-underline">
+          <div
+            class="bg-gradient-to-r from-violet-500 to-blue-500 bg-clip-text text-2xl font-extrabold text-transparent"
+          >
+            DGS Takip
+          </div>
+          <div class="text-[10px] font-medium tracking-widest text-slate-500 uppercase">
+            19 Temmuz 2026
+          </div>
+        </a>
+        <div class="flex gap-1">
+          <a
+            href="/"
+            class:list={[
+              'rounded-lg px-4 py-2 text-sm font-medium no-underline transition-all duration-200',
+              activeNav === 'dashboard'
+                ? 'bg-violet-500/10 text-violet-300'
+                : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100',
+            ]}>Panel</a
+          >
+          <a
+            href="/exam/new"
+            class:list={[
+              'rounded-lg px-4 py-2 text-sm font-medium no-underline transition-all duration-200',
+              activeNav === 'new-exam'
+                ? 'bg-violet-500/10 text-violet-300'
+                : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100',
+            ]}>+ Deneme</a
+          >
+          <a
+            href="/analysis"
+            class:list={[
+              'rounded-lg px-4 py-2 text-sm font-medium no-underline transition-all duration-200',
+              activeNav === 'analysis'
+                ? 'bg-violet-500/10 text-violet-300'
+                : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100',
+            ]}>Analiz</a
+          >
+          <a
+            href="/history"
+            class:list={[
+              'rounded-lg px-4 py-2 text-sm font-medium no-underline transition-all duration-200',
+              activeNav === 'history'
+                ? 'bg-violet-500/10 text-violet-300'
+                : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100',
+            ]}>Geçmiş</a
+          >
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main>
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <footer class="py-10 text-center text-xs text-slate-600">
+        DGS 2026 • Hedef: 19 Temmuz • Başarılar! 🚀
+      </footer>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>
