@@ -12,13 +12,15 @@ export interface D1DB {
   batch: (stmts: D1PreparedStatement[]) => Promise<unknown>;
 }
 
-/** Astro Cloudflare runtime env */
-export interface CloudflareEnv {
-  runtime: {
-    env: {
-      DB: D1DB;
-    };
-  };
+/**
+ * Helper: Cloudflare Workers environment binding.
+ *
+ * Astro v6 removed `Astro.locals.runtime.env`.
+ * Use `import { env } from "cloudflare:workers"` instead.
+ * This interface describes the shape of that `env` object.
+ */
+export interface Env {
+  DB: D1DB;
 }
 
 /** Deneme kayıt */
