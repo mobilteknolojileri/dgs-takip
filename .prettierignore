@@ -1,0 +1,5 @@
+# Prettier ignore
+node_modules
+dist
+.astro
+wrangler.jsonc
