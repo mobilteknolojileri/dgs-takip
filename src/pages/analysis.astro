@@ -1,0 +1,151 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SubjectChart from '../components/SubjectChart';
+import type { CloudflareEnv } from '../types';
+
+interface SubjectStat {
+  subject_name: string;
+  category: string;
+  total_correct: number;
+  total_wrong: number;
+  total_blank: number;
+  appearance_count: number;
+  wrong_rate: number;
+}
+
+const runtime = (Astro.locals as Record<string, unknown>).runtime as
+  | CloudflareEnv['runtime']
+  | undefined;
+const db = runtime?.env?.DB;
+let subjectStats: SubjectStat[] = [];
+
+try {
+  if (db) {
+    const { results } = await db
+      .prepare(
+        `
+      SELECT subject_name, category,
+             SUM(correct) as total_correct,
+             SUM(wrong) as total_wrong,
+             SUM(blank) as total_blank,
+             COUNT(*) as appearance_count,
+             ROUND(CAST(SUM(wrong) AS FLOAT) / NULLIF(SUM(correct) + SUM(wrong), 0) * 100, 1) as wrong_rate
+      FROM exam_subjects
+      GROUP BY subject_name, category
+      ORDER BY wrong_rate DESC
+    `,
+      )
+      .all<SubjectStat>();
+    subjectStats = results || [];
+  }
+} catch (e) {
+  console.error('DB error:', e);
+}
+
+const sayisalStats = subjectStats.filter((s) => s.category === 'sayisal');
+const sozelStats = subjectStats.filter((s) => s.category === 'sozel');
+---
+
+<Layout title="Konu Analizi" activeNav="analysis">
+  <div class="mb-8">
+    <h1 class="mb-2 text-2xl font-extrabold">📊 Konu Bazlı Analiz</h1>
+    <p class="text-sm text-slate-500">Tüm denemelerindeki konu performansını incele.</p>
+  </div>
+
+  {
+    subjectStats.length > 0 ? (
+      <Fragment>
+        <div class="mb-6 rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
+          <h2 class="mb-4 text-lg font-bold">📈 Tüm Konular (Yanlış Oranına Göre)</h2>
+          <SubjectChart stats={subjectStats} filter="all" client:load />
+        </div>
+
+        <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
+            <h2 class="mb-4 text-lg font-bold">🔢 Sayısal Konular</h2>
+            {sayisalStats.length > 0 ? (
+              <div class="space-y-2">
+                {sayisalStats.map((s) => (
+                  <div class="flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.04]">
+                    <div>
+                      <div class="text-sm font-medium text-slate-300">{s.subject_name}</div>
+                      <div class="text-[10px] text-slate-600">{s.appearance_count} denemede</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="flex gap-2 text-xs">
+                        <span class="text-emerald-400">✅{s.total_correct}</span>
+                        <span class="text-red-400">❌{s.total_wrong}</span>
+                      </div>
+                      <div
+                        class={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                          s.wrong_rate > 50
+                            ? 'bg-red-500/20 text-red-400'
+                            : s.wrong_rate > 30
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'bg-emerald-500/20 text-emerald-400'
+                        }`}
+                      >
+                        %{s.wrong_rate || 0}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p class="py-8 text-center text-sm text-slate-500">Veri yok</p>
+            )}
+          </div>
+
+          <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
+            <h2 class="mb-4 text-lg font-bold">📝 Sözel Konular</h2>
+            {sozelStats.length > 0 ? (
+              <div class="space-y-2">
+                {sozelStats.map((s) => (
+                  <div class="flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.04]">
+                    <div>
+                      <div class="text-sm font-medium text-slate-300">{s.subject_name}</div>
+                      <div class="text-[10px] text-slate-600">{s.appearance_count} denemede</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="flex gap-2 text-xs">
+                        <span class="text-emerald-400">✅{s.total_correct}</span>
+                        <span class="text-red-400">❌{s.total_wrong}</span>
+                      </div>
+                      <div
+                        class={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                          s.wrong_rate > 50
+                            ? 'bg-red-500/20 text-red-400'
+                            : s.wrong_rate > 30
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'bg-emerald-500/20 text-emerald-400'
+                        }`}
+                      >
+                        %{s.wrong_rate || 0}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p class="py-8 text-center text-sm text-slate-500">Veri yok</p>
+            )}
+          </div>
+        </div>
+      </Fragment>
+    ) : (
+      <div class="py-20 text-center">
+        <div class="mb-4 text-6xl">📊</div>
+        <h2 class="mb-2 text-xl font-bold">Henüz analiz verisi yok</h2>
+        <p class="mb-6 text-sm text-slate-500">
+          Deneme eklerken konu bazlı detayları da girersen burada analiz göreceksin.
+        </p>
+        <a
+          href="/exam/new"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-6 py-3 text-sm font-bold text-white no-underline shadow-[0_0_20px_rgba(124,92,252,0.3)] transition-all hover:-translate-y-0.5"
+        >
+          + Deneme Ekle
+        </a>
+      </div>
+    )
+  }
+</Layout>

@@ -1,0 +1,235 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CountdownTimer from '../components/CountdownTimer';
+import TrendChart from '../components/TrendChart';
+
+interface ExamRecord {
+  id: number;
+  name: string;
+  publisher?: string;
+  exam_date: string;
+  sayisal_net: number;
+  sozel_net: number;
+  total_net: number;
+  sayisal_correct: number;
+  sayisal_wrong: number;
+  sozel_correct: number;
+  sozel_wrong: number;
+}
+
+interface WeakTopic {
+  subject_name: string;
+  category: string;
+  total_correct: number;
+  total_wrong: number;
+  wrong_rate: number;
+}
+
+interface Stats {
+  totalExams: number;
+  avgSayisal: number;
+  avgSozel: number;
+  avgTotal: number;
+  maxTotal: number;
+  lastExams: ExamRecord[];
+}
+
+const runtime = (Astro.locals as Record<string, unknown>).runtime as
+  | { env: { DB: unknown } }
+  | undefined;
+const db = runtime?.env?.DB as
+  | {
+      prepare: (q: string) => {
+        first: () => Promise<Record<string, unknown> | null>;
+        all: () => Promise<{ results: unknown[] }>;
+        bind: (...args: unknown[]) => {
+          first: () => Promise<Record<string, unknown> | null>;
+          all: () => Promise<{ results: unknown[] }>;
+        };
+      };
+    }
+  | undefined;
+
+let stats: Stats | null = null;
+let recentExams: ExamRecord[] = [];
+let weakTopics: WeakTopic[] = [];
+
+try {
+  if (db) {
+    const countResult = await db.prepare('SELECT COUNT(*) as total FROM exams').first();
+    const totalExams = (countResult?.total as number) || 0;
+
+    const avgResult = await db
+      .prepare(
+        `
+      SELECT AVG(sayisal_net) as avg_sayisal, AVG(sozel_net) as avg_sozel,
+             AVG(total_net) as avg_total, MAX(total_net) as max_total
+      FROM exams
+    `,
+      )
+      .first();
+
+    const { results: exams } = await db
+      .prepare(
+        'SELECT name, exam_date, sayisal_net, sozel_net, total_net FROM exams ORDER BY exam_date ASC LIMIT 20',
+      )
+      .all();
+    recentExams = (exams as ExamRecord[]) || [];
+
+    const { results: weak } = await db
+      .prepare(
+        `
+      SELECT subject_name, category, SUM(wrong) as total_wrong, SUM(correct) as total_correct,
+             ROUND(CAST(SUM(wrong) AS FLOAT) / NULLIF(SUM(correct) + SUM(wrong), 0) * 100, 1) as wrong_rate
+      FROM exam_subjects GROUP BY subject_name, category
+      HAVING SUM(correct) + SUM(wrong) >= 2
+      ORDER BY wrong_rate DESC LIMIT 5
+    `,
+      )
+      .all();
+    weakTopics = (weak as WeakTopic[]) || [];
+
+    const { results: lastExams } = await db
+      .prepare('SELECT * FROM exams ORDER BY exam_date DESC LIMIT 5')
+      .all();
+
+    stats = {
+      totalExams,
+      avgSayisal: Math.round(((avgResult?.avg_sayisal as number) || 0) * 10) / 10,
+      avgSozel: Math.round(((avgResult?.avg_sozel as number) || 0) * 10) / 10,
+      avgTotal: Math.round(((avgResult?.avg_total as number) || 0) * 10) / 10,
+      maxTotal: (avgResult?.max_total as number) || 0,
+      lastExams: (lastExams as ExamRecord[]) || [],
+    };
+  }
+} catch (e) {
+  console.error('DB error:', e);
+}
+
+const hasData = stats !== null && stats.totalExams > 0;
+---
+
+<Layout title="Panel" activeNav="dashboard">
+  <CountdownTimer client:load />
+
+  {
+    hasData && stats !== null ? (
+      <Fragment>
+        <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-violet-500 bg-slate-900/60 p-5">
+            <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Toplam Deneme
+            </div>
+            <div class="text-3xl font-extrabold text-violet-400">{stats.totalExams}</div>
+          </div>
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-emerald-500 bg-slate-900/60 p-5">
+            <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Ort. Net
+            </div>
+            <div class="text-3xl font-extrabold text-emerald-400">{stats.avgTotal}</div>
+          </div>
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-blue-500 bg-slate-900/60 p-5">
+            <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Ort. Sayısal
+            </div>
+            <div class="text-3xl font-extrabold text-blue-400">{stats.avgSayisal}</div>
+          </div>
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-amber-500 bg-slate-900/60 p-5">
+            <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Ort. Sözel
+            </div>
+            <div class="text-3xl font-extrabold text-amber-400">{stats.avgSozel}</div>
+          </div>
+        </div>
+
+        <div class="mb-6 rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
+          <h2 class="mb-4 text-lg font-bold">📈 Net Trendi</h2>
+          <TrendChart exams={recentExams} client:load />
+        </div>
+
+        <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-lg font-bold">📋 Son Denemeler</h2>
+              <a href="/history" class="text-xs text-violet-400 no-underline hover:text-violet-300">
+                Tümünü gör →
+              </a>
+            </div>
+            <div class="space-y-2">
+              {stats.lastExams.map((exam) => (
+                <a
+                  href={`/exam/${exam.id}`}
+                  class="flex items-center justify-between rounded-xl p-3 no-underline transition-colors hover:bg-white/[0.04]"
+                >
+                  <div>
+                    <div class="text-sm font-semibold text-slate-200">{exam.name}</div>
+                    <div class="text-xs text-slate-500">
+                      {new Date(exam.exam_date).toLocaleDateString('tr-TR')}
+                      {exam.publisher && ` • ${exam.publisher}`}
+                    </div>
+                  </div>
+                  <div
+                    class={`text-lg font-extrabold ${exam.total_net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                  >
+                    {exam.total_net.toFixed(1)}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-lg font-bold">⚠️ Zayıf Konular</h2>
+              <a
+                href="/analysis"
+                class="text-xs text-violet-400 no-underline hover:text-violet-300"
+              >
+                Detaylı analiz →
+              </a>
+            </div>
+            {weakTopics.length > 0 ? (
+              <div class="space-y-3">
+                {weakTopics.map((topic) => (
+                  <div class="rounded-xl bg-white/[0.03] p-3">
+                    <div class="mb-1 flex items-center justify-between">
+                      <span class="text-sm font-medium text-slate-300">{topic.subject_name}</span>
+                      <span class="text-xs font-bold text-red-400">%{topic.wrong_rate} yanlış</span>
+                    </div>
+                    <div class="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div
+                        class="h-full rounded-full bg-gradient-to-r from-red-500 to-amber-500"
+                        style={`width: ${topic.wrong_rate}%`}
+                      />
+                    </div>
+                    <div class="mt-1 flex gap-3 text-[10px] text-slate-500">
+                      <span>✅ {topic.total_correct}</span>
+                      <span>❌ {topic.total_wrong}</span>
+                      <span class="text-slate-600">
+                        {topic.category === 'sayisal' ? '🔢 Sayısal' : '📝 Sözel'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p class="py-8 text-center text-sm text-slate-500">Yeterli veri yok</p>
+            )}
+          </div>
+        </div>
+      </Fragment>
+    ) : (
+      <div class="py-20 text-center">
+        <div class="mb-4 text-6xl">📚</div>
+        <h2 class="mb-2 text-xl font-bold">Henüz deneme eklenmemiş</h2>
+        <p class="mb-6 text-sm text-slate-500">İlk denemeni ekleyerek başla!</p>
+        <a
+          href="/exam/new"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-6 py-3 text-sm font-bold text-white no-underline shadow-[0_0_20px_rgba(124,92,252,0.3)] transition-all hover:-translate-y-0.5"
+        >
+          + İlk Denemeyi Ekle
+        </a>
+      </div>
+    )
+  }
+</Layout>

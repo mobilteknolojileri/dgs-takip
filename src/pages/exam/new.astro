@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ExamForm from '../../components/ExamForm';
+---
+
+<Layout title="Yeni Deneme" activeNav="new-exam">
+  <div class="mb-8">
+    <h1 class="mb-2 text-2xl font-extrabold">📝 Yeni Deneme Ekle</h1>
+    <p class="text-sm text-slate-500">Deneme sonuçlarını girerek performansını takip et.</p>
+  </div>
+  <ExamForm client:load />
+</Layout>
