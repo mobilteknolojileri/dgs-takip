@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import type { CloudflareEnv, SubjectResult } from '../../types';
+import type { Env, SubjectResult } from '../../types';
 
 interface SubjectStat extends SubjectResult {
   appearance_count: number;
@@ -10,8 +10,9 @@ interface SubjectStat extends SubjectResult {
 }
 
 // GET: Genel istatistikler + konu bazlı analiz
-export const GET: APIRoute = async ({ locals }) => {
-  const { DB: db } = (locals as unknown as CloudflareEnv).runtime.env;
+export const GET: APIRoute = async () => {
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
 
   // Toplam deneme sayısı
   const countResult = await db.prepare('SELECT COUNT(*) as total FROM exams').first();

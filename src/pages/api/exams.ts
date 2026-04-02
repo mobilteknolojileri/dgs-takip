@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
-import type { CloudflareEnv, CreateExamBody } from '../../types';
+import type { Env, CreateExamBody } from '../../types';
 
 // GET: Tüm denemeleri listele
-export const GET: APIRoute = async ({ locals }) => {
-  const { DB: db } = (locals as unknown as CloudflareEnv).runtime.env;
+export const GET: APIRoute = async () => {
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
 
   const { results: exams } = await db.prepare('SELECT * FROM exams ORDER BY exam_date DESC').all();
 
@@ -13,8 +14,9 @@ export const GET: APIRoute = async ({ locals }) => {
 };
 
 // POST: Yeni deneme ekle
-export const POST: APIRoute = async ({ request, locals }) => {
-  const { DB: db } = (locals as unknown as CloudflareEnv).runtime.env;
+export const POST: APIRoute = async ({ request }) => {
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
   const body = (await request.json()) as CreateExamBody;
 
   const {

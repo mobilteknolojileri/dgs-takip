@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
-import type { CloudflareEnv } from '../../../types';
+import type { Env } from '../../../types';
 
 // GET: Tek deneme detay
-export const GET: APIRoute = async ({ params, locals }) => {
-  const { DB: db } = (locals as unknown as CloudflareEnv).runtime.env;
+export const GET: APIRoute = async ({ params }) => {
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
   const { id } = params;
 
   const exam = await db.prepare('SELECT * FROM exams WHERE id = ?').bind(id).first();
@@ -23,8 +24,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
 };
 
 // DELETE: Deneme sil
-export const DELETE: APIRoute = async ({ params, locals }) => {
-  const { DB: db } = (locals as unknown as CloudflareEnv).runtime.env;
+export const DELETE: APIRoute = async ({ params }) => {
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
   const { id } = params;
 
   await db.prepare('DELETE FROM exam_subjects WHERE exam_id = ?').bind(id).run();
