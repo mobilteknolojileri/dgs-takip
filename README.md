@@ -1,4 +1,4 @@
-# 🎯 DGS 2026 Deneme Takip ve Analiz
+# DGS 2026 Deneme Takip ve Analiz
 
 ![Astro](https://img.shields.io/badge/Astro-BC52EE?style=flat-square&logo=astro&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
@@ -8,7 +8,7 @@
 
 DGS (Dikey Geçiş Sınavı) 2026 hazırlık sürecinde çözülen denemeleri takip etmek, konu analizlerini derinlemesine incelemek ve kalan süreyi yönetmek için geliştirilmiş yüksek performanslı, **serverless (sunucusuz)** bir web uygulamasıdır.
 
-## 🚀 Özellikler
+## Özellikler
 
 - **Gelişmiş Deneme Kaydı:** Sadece netleri değil, sayısal ve sözel olarak hangi konulardan doğru/yanlış yapıldığını tek tek kaydetme imkanı.
 - **Dinamik Zayıf Konu Tespiti:** Girilen verilere göre yanlış oranını (`wrong_rate`) hesaplayıp, en acil çalışılması gereken konuları öne çıkartır.
@@ -16,7 +16,7 @@ DGS (Dikey Geçiş Sınavı) 2026 hazırlık sürecinde çözülen denemeleri ta
 - **Modern Arayüz (UI/UX):** Glassmorphism teknikleriyle tasarlanmış, tam duyarlı (responsive) karanlık tema (Dark Mode).
 - **Zaman Yönetimi:** DGS 2026 (19 Temmuz) hedefine kilitlenmiş, canlı işlem yapan optimizasyonlu geri sayım sayacı.
 
-## 🛠️ Teknoloji Yığını
+## Teknoloji Yığını
 
 - **Framework:** [Astro](https://astro.build/) (Server-Side Rendering modu aktif)
 - **Frontend Kitaplığı:** [React](https://react.dev/) (Astro Islands mimarisi ile)
@@ -26,11 +26,12 @@ DGS (Dikey Geçiş Sınavı) 2026 hazırlık sürecinde çözülen denemeleri ta
 - **Tür Güvenliği:** TypeScript
 - **Kod Kalitesi:** ESLint + Prettier + Husky (özel CI scriptleri ile)
 
-## 📦 Kurulum ve Geliştirme
+## Kurulum ve Geliştirme
 
 Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyin:
 
 ### 1. Depoyu İndirin ve Bağımlılıkları Kurun
+
 ```bash
 git clone https://github.com/mobilteknolojileri/dgs-takip.git
 cd dgs-takip
@@ -38,29 +39,33 @@ npm install
 ```
 
 ### 2. Yerel Veritabanını Başlatın
+
 Local geliştirme (Wrangler simülasyonu) için gerekli SQLite tablolarını oluşturur:
+
 ```bash
 npm run db:dev
 ```
 
 ### 3. Geliştirme Sunucusunu Çalıştırın
+
 ```bash
 npm run dev
 ```
+
 Uygulama `http://localhost:4321` adresinde çalışmaya başlayacaktır.
 
-## 📜 Temel Komutlar (Scripts)
+## Temel Komutlar (Scripts)
 
-| Komut | Açıklama |
-| :--- | :--- |
-| `npm run dev` | Yerel geliştirme ortamını (Astro dev + Cloudflare workerd) başlatır. |
-| `npm run check` | Projedeki türleri (TypeScript), lint (ESLint) ve format (Prettier) sorunlarını tek seferde denetler. |
-| `npm run fix` | Lint ve format hatalarını otomatik olarak düzeltir. |
-| `npm run db:dev` | `schema.sql` dosyasını yerel wrangler d1 simülatörüne uygular. |
-| `npm run db:push:prod` | Şema değişikliklerini gerçek (Production) Cloudflare D1 veritabanına aktarır. |
-| `npm run deploy` | Kalite kontrollerinden geçirip, projeyi Cloudflare Pages üzerine deploy eder. |
+| Komut                  | Açıklama                                                                                             |
+| :--------------------- | :--------------------------------------------------------------------------------------------------- |
+| `npm run dev`          | Yerel geliştirme ortamını (Astro dev + Cloudflare workerd) başlatır.                                 |
+| `npm run check`        | Projedeki türleri (TypeScript), lint (ESLint) ve format (Prettier) sorunlarını tek seferde denetler. |
+| `npm run fix`          | Lint ve format hatalarını otomatik olarak düzeltir.                                                  |
+| `npm run db:dev`       | `schema.sql` dosyasını yerel wrangler d1 simülatörüne uygular.                                       |
+| `npm run db:push:prod` | Şema değişikliklerini gerçek (Production) Cloudflare D1 veritabanına aktarır.                        |
+| `npm run deploy`       | Kalite kontrollerinden geçirip, projeyi Cloudflare Pages üzerine deploy eder.                        |
 
-## 🏗️ Proje Mimarisi
+## Proje Mimarisi
 
 - `db/schema.sql` → Veritabanı şeması tasarımı. (Sadece veriler saklanır, statik konu listeleri frontend üzerinde yaşar).
 - `src/pages/api/` → Cloudflare ağında çalışan hafif Astro API endpointleri.
