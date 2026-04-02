@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PartyPopper } from 'lucide-react';
 
 const DGS_DATE = new Date('2026-07-19T10:15:00+03:00');
 
@@ -26,7 +27,9 @@ export default function CountdownTimer() {
   if (timeLeft.total <= 0) {
     return (
       <div className="relative mb-6 overflow-hidden rounded-3xl border border-white/[0.06] bg-slate-900/60 p-8 text-center">
-        <div className="text-2xl font-bold">🎉 Sınav Günü Geldi! Başarılar!</div>
+        <div className="flex items-center justify-center gap-3 text-2xl font-bold">
+          <PartyPopper className="h-8 w-8 text-blue-400" /> Sınav Günü Geldi! Başarılar!
+        </div>
       </div>
     );
   }
@@ -39,7 +42,7 @@ export default function CountdownTimer() {
         style={{
           width: '200%',
           height: '200%',
-          background: 'radial-gradient(circle, rgba(124, 92, 252, 0.06) 0%, transparent 60%)',
+          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, transparent 60%)',
           animation: 'pulse-glow 4s ease-in-out infinite',
         }}
       />
@@ -68,7 +71,7 @@ function Unit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex min-w-[60px] flex-col items-center md:min-w-[80px]">
       <div
-        className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-4xl leading-none font-black text-transparent md:text-5xl"
+        className="bg-gradient-to-r from-blue-400 to-sky-400 bg-clip-text text-4xl leading-none font-black text-transparent md:text-5xl"
         style={{ fontVariantNumeric: 'tabular-nums' }}
       >
         {String(value).padStart(2, '0')}
