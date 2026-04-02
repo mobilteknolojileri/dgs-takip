@@ -2,20 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import CountdownTimer from '../components/CountdownTimer';
 import TrendChart from '../components/TrendChart';
-
-interface ExamRecord {
-  id: number;
-  name: string;
-  publisher?: string;
-  exam_date: string;
-  sayisal_net: number;
-  sozel_net: number;
-  total_net: number;
-  sayisal_correct: number;
-  sayisal_wrong: number;
-  sozel_correct: number;
-  sozel_wrong: number;
-}
+import type { Env, ExamRecord } from '../types';
 
 interface WeakTopic {
   subject_name: string;
@@ -34,74 +21,59 @@ interface Stats {
   lastExams: ExamRecord[];
 }
 
-const runtime = (Astro.locals as Record<string, unknown>).runtime as
-  | { env: { DB: unknown } }
-  | undefined;
-const db = runtime?.env?.DB as
-  | {
-      prepare: (q: string) => {
-        first: () => Promise<Record<string, unknown> | null>;
-        all: () => Promise<{ results: unknown[] }>;
-        bind: (...args: unknown[]) => {
-          first: () => Promise<Record<string, unknown> | null>;
-          all: () => Promise<{ results: unknown[] }>;
-        };
-      };
-    }
-  | undefined;
-
 let stats: Stats | null = null;
 let recentExams: ExamRecord[] = [];
 let weakTopics: WeakTopic[] = [];
 
 try {
-  if (db) {
-    const countResult = await db.prepare('SELECT COUNT(*) as total FROM exams').first();
-    const totalExams = (countResult?.total as number) || 0;
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
 
-    const avgResult = await db
-      .prepare(
-        `
-      SELECT AVG(sayisal_net) as avg_sayisal, AVG(sozel_net) as avg_sozel,
-             AVG(total_net) as avg_total, MAX(total_net) as max_total
-      FROM exams
-    `,
-      )
-      .first();
+  const countResult = await db.prepare('SELECT COUNT(*) as total FROM exams').first();
+  const totalExams = (countResult?.total as number) || 0;
 
-    const { results: exams } = await db
-      .prepare(
-        'SELECT name, exam_date, sayisal_net, sozel_net, total_net FROM exams ORDER BY exam_date ASC LIMIT 20',
-      )
-      .all();
-    recentExams = (exams as ExamRecord[]) || [];
+  const avgResult = await db
+    .prepare(
+      `
+    SELECT AVG(sayisal_net) as avg_sayisal, AVG(sozel_net) as avg_sozel,
+           AVG(total_net) as avg_total, MAX(total_net) as max_total
+    FROM exams
+  `,
+    )
+    .first();
 
-    const { results: weak } = await db
-      .prepare(
-        `
-      SELECT subject_name, category, SUM(wrong) as total_wrong, SUM(correct) as total_correct,
-             ROUND(CAST(SUM(wrong) AS FLOAT) / NULLIF(SUM(correct) + SUM(wrong), 0) * 100, 1) as wrong_rate
-      FROM exam_subjects GROUP BY subject_name, category
-      HAVING SUM(correct) + SUM(wrong) >= 2
-      ORDER BY wrong_rate DESC LIMIT 5
-    `,
-      )
-      .all();
-    weakTopics = (weak as WeakTopic[]) || [];
+  const { results: exams } = await db
+    .prepare(
+      'SELECT name, exam_date, sayisal_net, sozel_net, total_net FROM exams ORDER BY exam_date ASC LIMIT 20',
+    )
+    .all<ExamRecord>();
+  recentExams = exams || [];
 
-    const { results: lastExams } = await db
-      .prepare('SELECT * FROM exams ORDER BY exam_date DESC LIMIT 5')
-      .all();
+  const { results: weak } = await db
+    .prepare(
+      `
+    SELECT subject_name, category, SUM(wrong) as total_wrong, SUM(correct) as total_correct,
+           ROUND(CAST(SUM(wrong) AS FLOAT) / NULLIF(SUM(correct) + SUM(wrong), 0) * 100, 1) as wrong_rate
+    FROM exam_subjects GROUP BY subject_name, category
+    HAVING SUM(correct) + SUM(wrong) >= 2
+    ORDER BY wrong_rate DESC LIMIT 5
+  `,
+    )
+    .all<WeakTopic>();
+  weakTopics = weak || [];
 
-    stats = {
-      totalExams,
-      avgSayisal: Math.round(((avgResult?.avg_sayisal as number) || 0) * 10) / 10,
-      avgSozel: Math.round(((avgResult?.avg_sozel as number) || 0) * 10) / 10,
-      avgTotal: Math.round(((avgResult?.avg_total as number) || 0) * 10) / 10,
-      maxTotal: (avgResult?.max_total as number) || 0,
-      lastExams: (lastExams as ExamRecord[]) || [],
-    };
-  }
+  const { results: lastExams } = await db
+    .prepare('SELECT * FROM exams ORDER BY exam_date DESC LIMIT 5')
+    .all<ExamRecord>();
+
+  stats = {
+    totalExams,
+    avgSayisal: Math.round(((avgResult?.avg_sayisal as number) || 0) * 10) / 10,
+    avgSozel: Math.round(((avgResult?.avg_sozel as number) || 0) * 10) / 10,
+    avgTotal: Math.round(((avgResult?.avg_total as number) || 0) * 10) / 10,
+    maxTotal: (avgResult?.max_total as number) || 0,
+    lastExams: lastExams || [],
+  };
 } catch (e) {
   console.error('DB error:', e);
 }
@@ -143,14 +115,14 @@ const hasData = stats !== null && stats.totalExams > 0;
         </div>
 
         <div class="mb-6 rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
-          <h2 class="mb-4 text-lg font-bold">📈 Net Trendi</h2>
+          <h2 class="mb-4 text-lg font-bold">Net Trendi</h2>
           <TrendChart exams={recentExams} client:load />
         </div>
 
         <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
             <div class="mb-4 flex items-center justify-between">
-              <h2 class="text-lg font-bold">📋 Son Denemeler</h2>
+              <h2 class="text-lg font-bold">Son Denemeler</h2>
               <a href="/history" class="text-xs text-violet-400 no-underline hover:text-violet-300">
                 Tümünü gör →
               </a>
@@ -180,7 +152,7 @@ const hasData = stats !== null && stats.totalExams > 0;
 
           <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
             <div class="mb-4 flex items-center justify-between">
-              <h2 class="text-lg font-bold">⚠️ Zayıf Konular</h2>
+              <h2 class="text-lg font-bold">Zayıf Konular</h2>
               <a
                 href="/analysis"
                 class="text-xs text-violet-400 no-underline hover:text-violet-300"
@@ -206,7 +178,7 @@ const hasData = stats !== null && stats.totalExams > 0;
                       <span>✅ {topic.total_correct}</span>
                       <span>❌ {topic.total_wrong}</span>
                       <span class="text-slate-600">
-                        {topic.category === 'sayisal' ? '🔢 Sayısal' : '📝 Sözel'}
+                        {topic.category === 'sayisal' ? 'Sayısal' : 'Sözel'}
                       </span>
                     </div>
                   </div>

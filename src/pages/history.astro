@@ -1,14 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import type { Env, ExamRecord } from '../types';
 
-const db = (Astro.locals as any).runtime?.env?.DB;
-let exams: any[] = [];
+let exams: ExamRecord[] = [];
 
 try {
-  if (db) {
-    const { results } = await db.prepare('SELECT * FROM exams ORDER BY exam_date DESC').all();
-    exams = results || [];
-  }
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
+  const { results } = await db
+    .prepare('SELECT * FROM exams ORDER BY exam_date DESC')
+    .all<ExamRecord>();
+  exams = results || [];
 } catch (e) {
   console.error('DB error:', e);
 }
@@ -17,7 +19,7 @@ try {
 <Layout title="Deneme Geçmişi" activeNav="history">
   <div class="mb-8 flex items-center justify-between">
     <div>
-      <h1 class="mb-2 text-2xl font-extrabold">📋 Deneme Geçmişi</h1>
+      <h1 class="mb-2 text-2xl font-extrabold">Deneme Geçmişi</h1>
       <p class="text-sm text-slate-500">Tüm denemelerini burada görebilirsin.</p>
     </div>
     <a
@@ -56,7 +58,7 @@ try {
               </tr>
             </thead>
             <tbody>
-              {exams.map((exam: any) => (
+              {exams.map((exam) => (
                 <tr
                   class="cursor-pointer border-b border-white/[0.03] transition-colors hover:bg-white/[0.03]"
                   onclick={`window.location.href='/exam/${exam.id}'`}

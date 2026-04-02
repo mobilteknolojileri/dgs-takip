@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import SubjectChart from '../components/SubjectChart';
-import type { CloudflareEnv } from '../types';
+import type { Env } from '../types';
 
 interface SubjectStat {
   subject_name: string;
@@ -13,31 +13,28 @@ interface SubjectStat {
   wrong_rate: number;
 }
 
-const runtime = (Astro.locals as Record<string, unknown>).runtime as
-  | CloudflareEnv['runtime']
-  | undefined;
-const db = runtime?.env?.DB;
 let subjectStats: SubjectStat[] = [];
 
 try {
-  if (db) {
-    const { results } = await db
-      .prepare(
-        `
-      SELECT subject_name, category,
-             SUM(correct) as total_correct,
-             SUM(wrong) as total_wrong,
-             SUM(blank) as total_blank,
-             COUNT(*) as appearance_count,
-             ROUND(CAST(SUM(wrong) AS FLOAT) / NULLIF(SUM(correct) + SUM(wrong), 0) * 100, 1) as wrong_rate
-      FROM exam_subjects
-      GROUP BY subject_name, category
-      ORDER BY wrong_rate DESC
-    `,
-      )
-      .all<SubjectStat>();
-    subjectStats = results || [];
-  }
+  const { env } = await import('cloudflare:workers');
+  const db = (env as Env).DB;
+
+  const { results } = await db
+    .prepare(
+      `
+    SELECT subject_name, category,
+           SUM(correct) as total_correct,
+           SUM(wrong) as total_wrong,
+           SUM(blank) as total_blank,
+           COUNT(*) as appearance_count,
+           ROUND(CAST(SUM(wrong) AS FLOAT) / NULLIF(SUM(correct) + SUM(wrong), 0) * 100, 1) as wrong_rate
+    FROM exam_subjects
+    GROUP BY subject_name, category
+    ORDER BY wrong_rate DESC
+  `,
+    )
+    .all<SubjectStat>();
+  subjectStats = results || [];
 } catch (e) {
   console.error('DB error:', e);
 }
@@ -48,7 +45,7 @@ const sozelStats = subjectStats.filter((s) => s.category === 'sozel');
 
 <Layout title="Konu Analizi" activeNav="analysis">
   <div class="mb-8">
-    <h1 class="mb-2 text-2xl font-extrabold">📊 Konu Bazlı Analiz</h1>
+    <h1 class="mb-2 text-2xl font-extrabold">Konu Bazlı Analiz</h1>
     <p class="text-sm text-slate-500">Tüm denemelerindeki konu performansını incele.</p>
   </div>
 
@@ -56,13 +53,13 @@ const sozelStats = subjectStats.filter((s) => s.category === 'sozel');
     subjectStats.length > 0 ? (
       <Fragment>
         <div class="mb-6 rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
-          <h2 class="mb-4 text-lg font-bold">📈 Tüm Konular (Yanlış Oranına Göre)</h2>
+          <h2 class="mb-4 text-lg font-bold">Tüm Konular (Yanlış Oranına Göre)</h2>
           <SubjectChart stats={subjectStats} filter="all" client:load />
         </div>
 
         <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
-            <h2 class="mb-4 text-lg font-bold">🔢 Sayısal Konular</h2>
+            <h2 class="mb-4 text-lg font-bold">Sayısal Konular</h2>
             {sayisalStats.length > 0 ? (
               <div class="space-y-2">
                 {sayisalStats.map((s) => (
@@ -97,7 +94,7 @@ const sozelStats = subjectStats.filter((s) => s.category === 'sozel');
           </div>
 
           <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
-            <h2 class="mb-4 text-lg font-bold">📝 Sözel Konular</h2>
+            <h2 class="mb-4 text-lg font-bold">Sözel Konular</h2>
             {sozelStats.length > 0 ? (
               <div class="space-y-2">
                 {sozelStats.map((s) => (
