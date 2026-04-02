@@ -10,13 +10,14 @@
     "build": "astro build",
     "preview": "astro build && wrangler pages dev dist",
     "check": "astro check && npx eslint . && npx prettier --check .",
-    "fix": "npx eslint --fix . && npx prettier --write .",
+    "fix": "npx eslint --fix . && npx prettier --write . && astro check --fix",
     "deploy": "npm run check && npm run build && wrangler pages deploy dist --project-name=dgs-takip",
     "db:dev": "wrangler d1 execute dgs-takip-db --local --file=db/schema.sql",
     "db:push:prod": "wrangler d1 execute dgs-takip-db --remote --file=db/schema.sql",
     "types": "wrangler types"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.8",
     "@astrojs/cloudflare": "^13.1.7",
     "@astrojs/react": "^5.0.2",
     "@tailwindcss/vite": "^4.2.2",
@@ -28,7 +29,8 @@
     "react": "^19.2.4",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.4",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "vite": "^7"
