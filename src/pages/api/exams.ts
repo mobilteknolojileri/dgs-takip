@@ -29,6 +29,7 @@ export const POST: APIRoute = async ({ request }) => {
     sozel_correct = 0,
     sozel_wrong = 0,
     sozel_blank = 0,
+    time_spent = 0,
     notes = '',
     subjects = [],
   } = body;
@@ -41,8 +42,8 @@ export const POST: APIRoute = async ({ request }) => {
   // Deneme ekle
   const result = await db
     .prepare(
-      `INSERT INTO exams (name, publisher, exam_date, sayisal_correct, sayisal_wrong, sayisal_blank, sayisal_net, sozel_correct, sozel_wrong, sozel_blank, sozel_net, total_net, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO exams (name, publisher, exam_date, sayisal_correct, sayisal_wrong, sayisal_blank, sayisal_net, sozel_correct, sozel_wrong, sozel_blank, sozel_net, total_net, time_spent, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       name,
@@ -57,6 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
       sozel_blank,
       sozel_net,
       total_net,
+      time_spent,
       notes,
     )
     .run();

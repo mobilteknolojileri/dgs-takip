@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import type { Env, ExamRecord } from '../types';
+import { ClipboardList } from 'lucide-react';
 
 let exams: ExamRecord[] = [];
 
@@ -24,7 +25,7 @@ try {
     </div>
     <a
       href="/exam/new"
-      class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-500 to-blue-500 px-5 py-2.5 text-sm font-semibold text-white no-underline shadow-[0_0_20px_rgba(124,92,252,0.3)] transition-all hover:-translate-y-0.5"
+      class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 px-5 py-2.5 text-sm font-semibold text-white no-underline shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all hover:-translate-y-0.5"
     >
       + Ekle
     </a>
@@ -52,8 +53,11 @@ try {
                 <th class="px-5 py-3 text-center text-[11px] font-bold tracking-wide text-amber-400 uppercase">
                   Sözel
                 </th>
-                <th class="px-5 py-3 text-center text-[11px] font-bold tracking-wide text-violet-400 uppercase">
+                <th class="px-5 py-3 text-center text-[11px] font-bold tracking-wide text-blue-400 uppercase">
                   Toplam
+                </th>
+                <th class="px-5 py-3 text-center text-[11px] font-bold tracking-wide text-amber-500 uppercase">
+                  Süre
                 </th>
               </tr>
             </thead>
@@ -97,6 +101,16 @@ try {
                       {exam.total_net.toFixed(1)}
                     </span>
                   </td>
+                  <td class="px-5 py-4 text-center">
+                    {exam.time_spent > 0 ? (
+                      <div class="flex items-center justify-center gap-1 text-sm font-bold text-amber-500">
+                        {exam.time_spent}{' '}
+                        <span class="text-[10px] font-normal text-slate-500 uppercase">dk</span>
+                      </div>
+                    ) : (
+                      <span class="text-slate-700">-</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -105,12 +119,12 @@ try {
       </div>
     ) : (
       <div class="py-20 text-center">
-        <div class="mb-4 text-6xl">📋</div>
+        <ClipboardList className="mb-4 w-16 h-16 text-blue-400 mx-auto opacity-50" />
         <h2 class="mb-2 text-xl font-bold">Henüz deneme eklenmemiş</h2>
         <p class="mb-6 text-sm text-slate-500">İlk denemeni ekleyerek başla!</p>
         <a
           href="/exam/new"
-          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-6 py-3 text-sm font-bold text-white no-underline shadow-[0_0_20px_rgba(124,92,252,0.3)] transition-all hover:-translate-y-0.5"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-400 px-6 py-3 text-sm font-bold text-white no-underline shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all hover:-translate-y-0.5"
         >
           + İlk Denemeyi Ekle
         </a>

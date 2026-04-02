@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import CountdownTimer from '../components/CountdownTimer';
 import TrendChart from '../components/TrendChart';
 import type { Env, ExamRecord } from '../types';
+import { BookOpen, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 interface WeakTopic {
   subject_name: string;
@@ -18,6 +19,7 @@ interface Stats {
   avgSozel: number;
   avgTotal: number;
   maxTotal: number;
+  avgTime: number;
   lastExams: ExamRecord[];
 }
 
@@ -36,7 +38,8 @@ try {
     .prepare(
       `
     SELECT AVG(sayisal_net) as avg_sayisal, AVG(sozel_net) as avg_sozel,
-           AVG(total_net) as avg_total, MAX(total_net) as max_total
+           AVG(total_net) as avg_total, MAX(total_net) as max_total,
+           AVG(CASE WHEN time_spent > 0 THEN time_spent ELSE NULL END) as avg_time
     FROM exams
   `,
     )
@@ -72,6 +75,7 @@ try {
     avgSozel: Math.round(((avgResult?.avg_sozel as number) || 0) * 10) / 10,
     avgTotal: Math.round(((avgResult?.avg_total as number) || 0) * 10) / 10,
     maxTotal: (avgResult?.max_total as number) || 0,
+    avgTime: Math.round((avgResult?.avg_time as number) || 0),
     lastExams: lastExams || [],
   };
 } catch (e) {
@@ -88,11 +92,11 @@ const hasData = stats !== null && stats.totalExams > 0;
     hasData && stats !== null ? (
       <Fragment>
         <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-violet-500 bg-slate-900/60 p-5">
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-blue-500 bg-slate-900/60 p-5">
             <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               Toplam Deneme
             </div>
-            <div class="text-3xl font-extrabold text-violet-400">{stats.totalExams}</div>
+            <div class="text-3xl font-extrabold text-blue-400">{stats.totalExams}</div>
           </div>
           <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-emerald-500 bg-slate-900/60 p-5">
             <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
@@ -100,18 +104,29 @@ const hasData = stats !== null && stats.totalExams > 0;
             </div>
             <div class="text-3xl font-extrabold text-emerald-400">{stats.avgTotal}</div>
           </div>
-          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-blue-500 bg-slate-900/60 p-5">
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-sky-500 bg-slate-900/60 p-5">
             <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               Ort. Sayısal
             </div>
-            <div class="text-3xl font-extrabold text-blue-400">{stats.avgSayisal}</div>
+            <div class="text-3xl font-extrabold text-sky-400">{stats.avgSayisal}</div>
           </div>
-          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-amber-500 bg-slate-900/60 p-5">
+          <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-indigo-500 bg-slate-900/60 p-5">
             <div class="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               Ort. Sözel
             </div>
-            <div class="text-3xl font-extrabold text-amber-400">{stats.avgSozel}</div>
+            <div class="text-3xl font-extrabold text-indigo-400">{stats.avgSozel}</div>
           </div>
+          {stats.avgTime > 0 && (
+            <div class="rounded-2xl border border-t-2 border-white/[0.06] border-t-amber-500 bg-slate-900/60 p-5">
+              <div class="mb-2 flex items-center gap-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                <Clock className="h-3 w-3 text-amber-400" /> Ort. Süre
+              </div>
+              <div class="text-3xl font-extrabold text-amber-400">
+                {stats.avgTime}
+                <span class="text-base font-semibold text-slate-500"> dk</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div class="mb-6 rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
@@ -123,7 +138,7 @@ const hasData = stats !== null && stats.totalExams > 0;
           <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
             <div class="mb-4 flex items-center justify-between">
               <h2 class="text-lg font-bold">Son Denemeler</h2>
-              <a href="/history" class="text-xs text-violet-400 no-underline hover:text-violet-300">
+              <a href="/history" class="text-xs text-blue-400 no-underline hover:text-blue-300">
                 Tümünü gör →
               </a>
             </div>
@@ -153,10 +168,7 @@ const hasData = stats !== null && stats.totalExams > 0;
           <div class="rounded-2xl border border-white/[0.06] bg-slate-900/60 p-6">
             <div class="mb-4 flex items-center justify-between">
               <h2 class="text-lg font-bold">Zayıf Konular</h2>
-              <a
-                href="/analysis"
-                class="text-xs text-violet-400 no-underline hover:text-violet-300"
-              >
+              <a href="/analysis" class="text-xs text-blue-400 no-underline hover:text-blue-300">
                 Detaylı analiz →
               </a>
             </div>
@@ -174,9 +186,13 @@ const hasData = stats !== null && stats.totalExams > 0;
                         style={`width: ${topic.wrong_rate}%`}
                       />
                     </div>
-                    <div class="mt-1 flex gap-3 text-[10px] text-slate-500">
-                      <span>✅ {topic.total_correct}</span>
-                      <span>❌ {topic.total_wrong}</span>
+                    <div class="mt-1 flex items-center gap-3 text-[10px] text-slate-500">
+                      <span class="flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-emerald-400" /> {topic.total_correct}
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <XCircle className="w-3 h-3 text-red-400" /> {topic.total_wrong}
+                      </span>
                       <span class="text-slate-600">
                         {topic.category === 'sayisal' ? 'Sayısal' : 'Sözel'}
                       </span>
@@ -192,12 +208,12 @@ const hasData = stats !== null && stats.totalExams > 0;
       </Fragment>
     ) : (
       <div class="py-20 text-center">
-        <div class="mb-4 text-6xl">📚</div>
+        <BookOpen className="mb-4 w-16 h-16 text-blue-400 mx-auto opacity-50" />
         <h2 class="mb-2 text-xl font-bold">Henüz deneme eklenmemiş</h2>
         <p class="mb-6 text-sm text-slate-500">İlk denemeni ekleyerek başla!</p>
         <a
           href="/exam/new"
-          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-6 py-3 text-sm font-bold text-white no-underline shadow-[0_0_20px_rgba(124,92,252,0.3)] transition-all hover:-translate-y-0.5"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-400 px-6 py-3 text-sm font-bold text-white no-underline shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all hover:-translate-y-0.5"
         >
           + İlk Denemeyi Ekle
         </a>
