@@ -38,6 +38,7 @@ export interface ExamRecord {
   sozel_blank: number;
   sozel_net: number;
   total_net: number;
+  time_spent: number;
   notes: string | null;
   created_at: string;
 }
@@ -64,6 +65,7 @@ export interface CreateExamBody {
   sozel_correct: number;
   sozel_wrong: number;
   sozel_blank: number;
+  time_spent?: number;
   notes?: string;
   subjects: Array<{
     subject_name: string;
