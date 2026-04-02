@@ -1,0 +1,104 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Giriş" activeNav="">
+  <div class="flex min-h-[60vh] items-center justify-center">
+    <div
+      class="w-full max-w-sm rounded-2xl border border-white/[0.06] bg-slate-900/60 p-8 text-center"
+    >
+      <div
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-500/10"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-8 w-8 text-blue-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          ></path>
+        </svg>
+      </div>
+      <h1 class="mb-2 text-xl font-extrabold">DGS Takip</h1>
+      <p class="mb-6 text-sm text-slate-500">Devam etmek için PIN kodunu gir</p>
+
+      <div
+        id="pin-error"
+        class="mb-4 hidden rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400"
+      >
+        Yanlış PIN kodu!
+      </div>
+
+      <!-- autocomplete="new-password" prevents browser save-password prompt -->
+      <form id="pin-form" autocomplete="off">
+        <input
+          id="pin-input"
+          type="password"
+          name="one-time-code"
+          maxlength="6"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          placeholder="••••••"
+          autocomplete="one-time-code"
+          class="mb-4 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-slate-100 transition-all outline-none placeholder:tracking-[0.3em] placeholder:text-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+        />
+
+        <label
+          class="mb-4 flex cursor-pointer items-center justify-center gap-2 text-sm text-slate-400"
+        >
+          <input
+            id="remember-me"
+            type="checkbox"
+            checked
+            class="h-4 w-4 cursor-pointer rounded border-white/20 bg-white/[0.04] accent-blue-500"
+          />
+          Beni hatırla (30 gün)
+        </label>
+
+        <button
+          id="pin-submit"
+          type="submit"
+          class="w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-500 to-sky-400 px-6 py-3 text-sm font-bold text-white shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all hover:-translate-y-0.5"
+        >
+          Giriş Yap
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script is:inline>
+    const form = document.getElementById('pin-form');
+    const input = document.getElementById('pin-input');
+    const error = document.getElementById('pin-error');
+    const remember = document.getElementById('remember-me');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pin = input.value.trim();
+      if (!pin) return;
+
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin, remember: remember.checked }),
+      });
+
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        error.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+        setTimeout(() => error.classList.add('hidden'), 3000);
+      }
+    });
+
+    input.focus();
+  </script>
+</Layout>
