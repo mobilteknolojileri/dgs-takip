@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS exams (
   sozel_blank INTEGER DEFAULT 0,
   sozel_net REAL DEFAULT 0,
   total_net REAL DEFAULT 0,
+  time_spent INTEGER DEFAULT 0,
   notes TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );
