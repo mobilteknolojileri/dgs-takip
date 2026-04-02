@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 const SAYISAL_SUBJECTS = [
   'İşlem Yeteneği',
@@ -114,7 +114,7 @@ export default function ExamForm() {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!name.trim()) {
       setToast({ msg: 'Deneme adı gerekli!', type: 'error' });
